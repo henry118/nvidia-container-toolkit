@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/NVIDIA/go-nvlib/pkg/nvlib/info"
 	"github.com/urfave/cli/v3"
 
 	"github.com/NVIDIA/nvidia-container-toolkit/internal/logger"
@@ -113,6 +114,12 @@ func (m command) validateFlags(opts *options) error {
 }
 
 func (m command) run(opts *options) error {
+	nvinfo := info.New(info.WithLogger(m.logger))
+	if nvinfo.ResolvePlatform() == info.PlatformWSL {
+		m.logger.Infof("create-device-nodes is a no-op on WSL2; device nodes are managed via /dev/dxg")
+		return nil
+	}
+
 	if opts.loadKernelModules {
 		modules := nvmodules.New(
 			nvmodules.WithLogger(m.logger),
